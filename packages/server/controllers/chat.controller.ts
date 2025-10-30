@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { chartService } from '../services/chart.service';
+import { chartService } from '../services/chat.service';
 import z from 'zod';
 
 // Implement detail
