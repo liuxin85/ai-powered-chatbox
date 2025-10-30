@@ -1,6 +1,8 @@
 import type { Request, Response } from 'express';
 import { PrismaClient } from '../generated/prisma/client';
 import { reviewService } from '../services/review.service';
+import { productRepository } from '../repositories/product.repository';
+import { reviewRepository } from '../repositories/review.repository';
 
 export const reviewControler = {
   async getReviews(req: Request, res: Response) {
@@ -10,9 +12,17 @@ export const reviewControler = {
       res.status(400).json({ error: 'Invalid product ID.' });
       return;
     }
-    const reviews = await reviewService.getReviews(productId);
+    const product = await productRepository.getProduct(productId);
+    if (!product) {
+      res.status(404).json({ error: 'Product does not exist.' });
+    }
+    const reviews = await reviewRepository.getReviews(productId);
+    const summary = await reviewRepository.getReviewSummary(productId);
 
-    res.json(reviews);
+    res.json({
+      summary,
+      reviews,
+    });
   },
 
   async summarizeReviews(req: Request, res: Response) {
@@ -20,6 +30,17 @@ export const reviewControler = {
 
     if (isNaN(productId)) {
       res.status(400).json({ error: 'Invalid product ID.' });
+      return;
+    }
+
+    const product = await productRepository.getProduct(productId);
+    if (!product) {
+      res.status(400).json({ error: 'Invalid product' });
+      return;
+    }
+    const reviews = await reviewRepository.getReviews(productId, 1);
+    if (!reviews.length) {
+      res.status(400).json({ error: 'There are no reviews to summariz.' });
       return;
     }
 
